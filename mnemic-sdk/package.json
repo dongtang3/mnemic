@@ -1,0 +1,45 @@
+{
+  "name": "@mnemic/sdk",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared TypeScript SDK and contracts for Mnemic agent memory.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dongtang3/mnemic.git",
+    "directory": "mnemic-sdk"
+  },
+  "bugs": {
+    "url": "https://github.com/dongtang3/mnemic/issues"
+  },
+  "homepage": "https://github.com/dongtang3/mnemic/tree/main/mnemic-sdk#readme",
+  "keywords": [
+    "agent-memory",
+    "mnemic",
+    "typescript",
+    "sdk",
+    "llm"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "package.json"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test test/*.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

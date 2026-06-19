@@ -1,0 +1,47 @@
+{
+  "name": "@mnemic/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Command-line interface for Mnemic agent memory.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dongtang3/mnemic.git",
+    "directory": "mnemic-cli"
+  },
+  "bugs": {
+    "url": "https://github.com/dongtang3/mnemic/issues"
+  },
+  "homepage": "https://github.com/dongtang3/mnemic/tree/main/mnemic-cli#readme",
+  "keywords": [
+    "agent-memory",
+    "mnemic",
+    "cli",
+    "mcp",
+    "llm"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "package.json"
+  ],
+  "bin": {
+    "mnemic": "./dist/index.js"
+  },
+  "scripts": {
+    "prebuild": "npm --prefix ../mnemic-sdk run build",
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test test/*.mjs"
+  },
+  "dependencies": {
+    "@mnemic/sdk": "file:../mnemic-sdk"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

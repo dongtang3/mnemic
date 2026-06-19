@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "mnemic-memory": {
+      "command": "/bin/bash",
+      "args": ["./scripts/run-agent-memory-mcp.sh"],
+      "env": {
+        "MNEMIC_API_BASE": "http://localhost:8088"
+      }
+    }
+  }
+}

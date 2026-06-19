@@ -1,0 +1,80 @@
+{
+  "name": "@mnemic/platform",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Mnemic TypeScript workspace for long-term LLM and agent memory.",
+  "license": "MIT",
+  "packageManager": "npm@11.13.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dongtang3/mnemic.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dongtang3/mnemic/issues"
+  },
+  "homepage": "https://github.com/dongtang3/mnemic#readme",
+  "keywords": [
+    "agent-memory",
+    "mcp",
+    "model-context-protocol",
+    "llm",
+    "long-term-memory",
+    "temporal-memory",
+    "memory-graph",
+    "coding-agents",
+    "typescript",
+    "local-first",
+    "knowledge-graph"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "npm --prefix mnemic-sdk run build && npm --prefix mnemic-cli run build && npm --prefix mnemic-server run build && npm --prefix mcp-server run build && npm --prefix studio run build",
+    "test": "npm --prefix mnemic-sdk test && npm --prefix mnemic-cli test && npm --prefix mnemic-server test && npm --prefix mcp-server test",
+    "mnemic:dev": "npm --prefix mnemic-server run dev",
+    "mnemic:start": "npm --prefix mnemic-server start",
+    "studio:dev": "npm --prefix studio run dev",
+    "sdk:build": "npm --prefix mnemic-sdk run build",
+    "cli:build": "npm --prefix mnemic-cli run build",
+    "mcp:build": "npm --prefix mcp-server run build",
+    "init": "npm run cli:build && node mnemic-cli/dist/index.js init",
+    "demo": "bash scripts/launch-demo.sh",
+    "benchmark": "bash scripts/run-benchmark-report.sh",
+    "benchmark:landscape:check": "node scripts/check-benchmark-landscape.mjs",
+    "docs:check": "node scripts/check-docs-integrity.mjs",
+    "rewrite:check": "node scripts/check-typescript-rewrite.mjs",
+    "fresh:check": "node scripts/check-fresh-clone.mjs",
+    "market:check": "node scripts/check-market-readiness.mjs",
+    "doctor": "npm run cli:build && node mnemic-cli/dist/index.js doctor",
+    "launch:check": "node scripts/check-launch-readiness.mjs",
+    "github:launch:check": "node scripts/check-github-launch.mjs",
+    "docker:check": "node scripts/check-docker-readiness.mjs",
+    "repository:check": "node scripts/check-repository-migration.mjs",
+    "public:check": "node scripts/check-publication-readiness.mjs",
+    "supply:check": "node scripts/check-supply-chain.mjs",
+    "community:check": "node scripts/check-community-health.mjs",
+    "security:check": "node scripts/check-security-hardening.mjs",
+    "completion:check": "node scripts/check-completion-audit.mjs",
+    "studio:capture": "node scripts/capture-studio-preview.mjs",
+    "release:notes": "node scripts/generate-release-notes.mjs",
+    "release:check": "node scripts/check-release-readiness.mjs",
+    "openapi:check": "node scripts/check-openapi.mjs",
+    "package:check": "npm run build && node scripts/check-package-readiness.mjs",
+    "ci:smoke": "bash scripts/ci-smoke.sh"
+  },
+  "workspaces": [
+    "mnemic-sdk",
+    "mnemic-cli",
+    "mnemic-server",
+    "mcp-server",
+    "studio"
+  ],
+  "optionalDependencies": {
+    "@esbuild/linux-arm64": "^0.28.1",
+    "@esbuild/linux-x64": "^0.28.1",
+    "lightningcss-linux-arm64-gnu": "^1.32.0",
+    "lightningcss-linux-x64-gnu": "^1.32.0"
+  }
+}

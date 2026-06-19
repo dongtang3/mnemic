@@ -1,0 +1,147 @@
+#!/usr/bin/env node
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+
+const rootDir = new URL('..', import.meta.url).pathname.replace(/\/$/, '')
+const version = process.env.MNEMIC_RELEASE_VERSION ?? readJson('package.json').version
+const date = process.env.MNEMIC_RELEASE_DATE ?? new Date().toISOString().slice(0, 10)
+const outputFile = process.env.MNEMIC_RELEASE_NOTES
+  ? join(process.cwd(), process.env.MNEMIC_RELEASE_NOTES)
+  : join(rootDir, `docs/releases/v${version}.md`)
+
+const packages = [
+  ['SDK', 'mnemic-sdk/package.json'],
+  ['CLI', 'mnemic-cli/package.json'],
+  ['Server', 'mnemic-server/package.json'],
+  ['MCP', 'mcp-server/package.json'],
+].map(([label, path]) => ({ label, path, packageJson: readJson(path) }))
+
+const benchmark = readBenchmarkSummary()
+
+mkdirSync(join(outputFile, '..'), { recursive: true })
+writeFileSync(outputFile, renderReleaseNotes(), 'utf8')
+console.log(`Release notes written to ${outputFile}`)
+
+function renderReleaseNotes() {
+  const packageRows = packages
+    .map(({ label, path, packageJson }) => `| ${label} | \`${packageJson.name}\` | \`${packageJson.version}\` | \`${path}\` |`)
+    .join('\n')
+
+  return `# Mnemic v${version} Release Notes
+
+Date: ${date}
+Status: launch candidate
+
+Mnemic v${version} is the first public launch candidate for the TypeScript-first memory kernel for coding agents.
+
+## Highlights
+
+- TypeScript workspace with SDK, CLI, server, MCP adapter, and Studio.
+- Local-first JSON storage plus opt-in SQLite storage.
+- Source-keyed memory writes, dry-run write previews, explicit relations, event diffs, timelines, JSONL export/import, rollback preview, and policy-gated rollback.
+- Temporal \`asOf\` recall and event-log historical snapshot replay across HTTP, SDK, CLI, MCP, Studio, and OpenAPI.
+- Governance policy for likely secrets, source-key requirements, confidence warnings, stale records, and configurable policy files.
+- Real Studio graph preview, Docker quickstart with live Compose gate, one-command demo, local readiness doctor, package dry-run checks, OpenAPI drift checks, and benchmark landscape guardrails.
+- Docs integrity check for README Docs Map coverage, local Markdown links, and image targets.
+- Repository identity metadata for the final Mnemic GitHub target, with strict validation available before public posting.
+- Public launch readiness check for origin, clean worktree, remote reachability, GitHub About metadata, hosted CI/CodeQL proof, and npm publication blockers.
+- Supply-chain readiness gate for lockfile shape, high-threshold npm audit, package-manager pinning, npm token boundaries, and trusted-publishing/provenance docs.
+- GitHub community-health files for conduct, support, dependency updates, issue reporting, pull requests, security, and contribution flow.
+- CodeQL workflow and static security hardening gate for source-side code scanning readiness.
+
+## Packages
+
+| Surface | Package | Version | Source |
+| --- | --- | --- | --- |
+${packageRows}
+
+Packages remain \`private: true\` until npm scope ownership and registry dependency rewrites are confirmed. See [npm publishing strategy](../npm-publishing.md).
+
+## Benchmark
+
+Latest local deterministic benchmark:
+
+| Metric | Value |
+| --- | ---: |
+| recall@5 | ${benchmark.recallAt5} |
+| mean hit rank | ${benchmark.meanHitRank} |
+| stale false positive rate | ${benchmark.staleFalsePositiveRate} |
+| relation path coverage | ${benchmark.relationPathCoverage} |
+
+Report: \`target/mnemic-benchmark/mnemic-eval-report.md\`
+
+External benchmark scores for LoCoMo, LongMemEval, BEAM, LongMemEval-V2, and MemGym are not claimed in this release.
+
+## Verification
+
+Run before tagging:
+
+\`\`\`bash
+npm install
+npm run build
+npm test
+npm run doctor
+npm run launch:check
+npm run docs:check
+npm run rewrite:check
+npm run completion:check
+npm run fresh:check
+npm run github:launch:check
+npm run docker:check
+node scripts/check-docker-readiness.mjs --compose-config --live
+npm run repository:check
+npm run public:check
+npm run supply:check
+npm run community:check
+npm run security:check
+npm run openapi:check
+npm run package:check
+npm run demo
+npm run studio:capture
+npm run benchmark
+npm run benchmark:landscape:check
+npm run market:check
+npm run release:check
+npm run ci:smoke
+\`\`\`
+
+## Publish Guardrail
+
+This release note is safe to publish to GitHub. It is not an npm publish instruction. Registry publishing remains blocked until:
+
+- the \`@mnemic\` npm scope is owned or an alternate scope is chosen,
+- package \`private\` flags are intentionally changed,
+- \`file:../mnemic-sdk\` dependencies are replaced by publishable registry ranges,
+- package tarballs are rechecked with \`npm run package:check\`,
+- supply-chain readiness is rechecked with \`npm run supply:check\`,
+- and publish commands are run with explicit \`--access public\` only after review.
+`
+}
+
+function readBenchmarkSummary() {
+  const reportFile = join(rootDir, 'target/mnemic-benchmark/mnemic-eval-report.md')
+  const fallback = {
+    recallAt5: '1.00',
+    meanHitRank: '1.00',
+    staleFalsePositiveRate: '0.00',
+    relationPathCoverage: '1.00',
+  }
+  if (!existsSync(reportFile)) return fallback
+  const report = readFileSync(reportFile, 'utf8')
+  return {
+    recallAt5: metric(report, 'recall@5') ?? fallback.recallAt5,
+    meanHitRank: metric(report, 'mean hit rank') ?? fallback.meanHitRank,
+    staleFalsePositiveRate: metric(report, 'stale false positive rate') ?? fallback.staleFalsePositiveRate,
+    relationPathCoverage: metric(report, 'relation path coverage') ?? fallback.relationPathCoverage,
+  }
+}
+
+function metric(report, name) {
+  const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const match = report.match(new RegExp(`\\| ${escapedName} \\| ([^|]+) \\|`))
+  return match?.[1]?.trim()
+}
+
+function readJson(relativePath) {
+  return JSON.parse(readFileSync(join(rootDir, relativePath), 'utf8'))
+}

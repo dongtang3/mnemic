@@ -1,0 +1,38 @@
+name: Feature request
+description: Suggest a Mnemic feature or integration.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What agent-memory workflow should this improve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: Describe the desired behavior and user-facing surface.
+    validations:
+      required: true
+  - type: checkboxes
+    id: surfaces
+    attributes:
+      label: Affected surfaces
+      options:
+        - label: HTTP API
+        - label: SDK
+        - label: CLI
+        - label: MCP
+        - label: Studio
+        - label: Storage
+        - label: Policy or audit
+        - label: Benchmark or eval
+        - label: Docs
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives
+      description: Existing tools, repos, or Mnemic workflows you considered.

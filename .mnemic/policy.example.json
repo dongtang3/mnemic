@@ -1,0 +1,29 @@
+{
+  "requireSourceKey": {
+    "memoryTypes": ["release", "security", "incident", "migration", "rollback", "production", "prod"],
+    "tags": ["release", "security", "incident", "migration", "rollback", "production", "prod"],
+    "severity": "block"
+  },
+  "secrets": {
+    "enabled": true,
+    "severity": "block",
+    "customPatterns": [
+      {
+        "policyId": "secret-company-token",
+        "pattern": "company_(?:live|prod)_[A-Za-z0-9]{20,}",
+        "fields": ["content", "metadata"],
+        "severity": "block",
+        "message": "Potential company token detected.",
+        "recommendation": "Redact the token and store only provenance or rotation status."
+      }
+    ]
+  },
+  "confidence": {
+    "lowWarningBelow": 0.35,
+    "highImportanceThreshold": 0.85,
+    "highImportanceLowWarningBelow": 0.5
+  },
+  "stale": {
+    "staleOnArrivalSeverity": "warning"
+  }
+}

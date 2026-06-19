@@ -1,0 +1,13 @@
+.git
+**/target
+legacy
+studio/node_modules
+studio/dist
+studio/.vite
+mcp-server/node_modules
+mcp-server/dist
+mnemic-cli/node_modules
+mnemic-cli/dist
+target
+tmp
+.DS_Store

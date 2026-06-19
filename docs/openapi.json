@@ -1,0 +1,1977 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Mnemic Agent Memory API",
+    "version": "0.1.0",
+    "description": "Local-first HTTP API for source-keyed, graph-backed long-term memory used by coding agents and LLM applications."
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8088",
+      "description": "Default local Mnemic backend"
+    }
+  ],
+  "tags": [
+    {
+      "name": "health",
+      "description": "Runtime health checks"
+    },
+    {
+      "name": "memory",
+      "description": "Memory write, recall, relation, and explanation endpoints"
+    },
+    {
+      "name": "context",
+      "description": "Prompt-ready context and session briefing endpoints"
+    },
+    {
+      "name": "governance",
+      "description": "Policy and memory hygiene endpoints"
+    },
+    {
+      "name": "events",
+      "description": "Timeline, JSONL handoff, import, and rollback endpoints"
+    }
+  ],
+  "paths": {
+    "/actuator/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "operationId": "getHealth",
+        "summary": "Return backend health.",
+        "responses": {
+          "200": {
+            "description": "Backend health.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agent-memory/memories": {
+      "get": {
+        "tags": [
+          "memory"
+        ],
+        "operationId": "searchMemories",
+        "summary": "Recall memories with optional text and metadata filters.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/query"
+          },
+          {
+            "$ref": "#/components/parameters/project"
+          },
+          {
+            "$ref": "#/components/parameters/memoryType"
+          },
+          {
+            "$ref": "#/components/parameters/tag"
+          },
+          {
+            "$ref": "#/components/parameters/asOf"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching memories.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AgentMemoryRecord"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "memory"
+        ],
+        "operationId": "rememberMemory",
+        "summary": "Create or update a source-keyed memory.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentMemoryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Stored memory.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentMemoryRecord"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/agent-memory/memories/preview": {
+      "post": {
+        "tags": [
+          "memory"
+        ],
+        "operationId": "previewMemoryWrite",
+        "summary": "Dry-run a memory write without mutating state.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentMemoryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Write preview, diff, policy findings, and state summaries.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentMemoryWritePreview"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/agent-memory/explain": {
+      "get": {
+        "tags": [
+          "memory"
+        ],
+        "operationId": "explainRecall",
+        "summary": "Explain why recall selected and ranked memories.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/query"
+          },
+          {
+            "$ref": "#/components/parameters/project"
+          },
+          {
+            "$ref": "#/components/parameters/memoryType"
+          },
+          {
+            "$ref": "#/components/parameters/tag"
+          },
+          {
+            "$ref": "#/components/parameters/asOf"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recall explanation entries.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentMemoryRecallExplanation"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agent-memory/memories/{memoryUid}": {
+      "get": {
+        "tags": [
+          "memory"
+        ],
+        "operationId": "getMemory",
+        "summary": "Fetch one memory by UID.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/memoryUid"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Memory record.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentMemoryRecord"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/agent-memory/memories/{memoryUid}/relations": {
+      "post": {
+        "tags": [
+          "memory"
+        ],
+        "operationId": "linkMemories",
+        "summary": "Attach an explicit relation from one memory to another.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/memoryUid"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentMemoryRelationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated source memory.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentMemoryRecord"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/agent-memory/context-pack": {
+      "get": {
+        "tags": [
+          "context"
+        ],
+        "operationId": "getContextPack",
+        "summary": "Build prompt-ready memory context for an agent task.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/query"
+          },
+          {
+            "$ref": "#/components/parameters/project"
+          },
+          {
+            "$ref": "#/components/parameters/asOf"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Context pack.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentMemoryContextPack"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agent-memory/briefing": {
+      "get": {
+        "tags": [
+          "context"
+        ],
+        "operationId": "getSessionBriefing",
+        "summary": "Return recent, important, and problem memories for session start.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/project"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session briefing.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentMemoryBriefing"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agent-memory/stats": {
+      "get": {
+        "tags": [
+          "governance"
+        ],
+        "operationId": "getMemoryStats",
+        "summary": "Return memory coverage and maintenance stats.",
+        "responses": {
+          "200": {
+            "description": "Memory stats.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentMemoryStats"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agent-memory/policy": {
+      "get": {
+        "tags": [
+          "governance"
+        ],
+        "operationId": "getPolicyStatus",
+        "summary": "Return the active resolved governance policy and source.",
+        "responses": {
+          "200": {
+            "description": "Resolved policy status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentMemoryPolicyStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agent-memory/audit": {
+      "get": {
+        "tags": [
+          "governance"
+        ],
+        "operationId": "auditMemories",
+        "summary": "Return memory hygiene findings and health score.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/project"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Memory audit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentMemoryAudit"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agent-memory/timeline": {
+      "get": {
+        "tags": [
+          "events"
+        ],
+        "operationId": "getMemoryTimeline",
+        "summary": "Return recent append-only memory events.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/project"
+          },
+          {
+            "$ref": "#/components/parameters/memoryType"
+          },
+          {
+            "$ref": "#/components/parameters/tag"
+          },
+          {
+            "$ref": "#/components/parameters/asOf"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Memory event timeline.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentMemoryTimeline"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agent-memory/export": {
+      "get": {
+        "tags": [
+          "events"
+        ],
+        "operationId": "exportMemoryJsonl",
+        "summary": "Export memory events as JSONL for audit or handoff.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/project"
+          },
+          {
+            "$ref": "#/components/parameters/memoryType"
+          },
+          {
+            "$ref": "#/components/parameters/tag"
+          },
+          {
+            "$ref": "#/components/parameters/asOf"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "JSONL export envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentMemoryJsonlExport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agent-memory/snapshot": {
+      "get": {
+        "tags": [
+          "events"
+        ],
+        "operationId": "getMemorySnapshot",
+        "summary": "Reconstruct memory graph state by replaying event log up to an optional timestamp.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/project"
+          },
+          {
+            "$ref": "#/components/parameters/memoryType"
+          },
+          {
+            "$ref": "#/components/parameters/tag"
+          },
+          {
+            "$ref": "#/components/parameters/asOf"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Historical memory graph snapshot.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentMemorySnapshot"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/agent-memory/import": {
+      "post": {
+        "tags": [
+          "events"
+        ],
+        "operationId": "importMemoryJsonl",
+        "summary": "Preview or import exported memory-event JSONL.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentMemoryJsonlImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Import result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentMemoryJsonlImportResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/agent-memory/rollback-preview": {
+      "get": {
+        "tags": [
+          "events"
+        ],
+        "operationId": "previewRollback",
+        "summary": "Preview the state effect of rolling back one event.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/eventUid"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rollback preview.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentMemoryRollbackPreview"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/agent-memory/rollback": {
+      "post": {
+        "tags": [
+          "events"
+        ],
+        "operationId": "rollbackMemoryEvent",
+        "summary": "Apply a policy-gated rollback for the latest event.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentMemoryRollbackRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Applied rollback result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentMemoryRollbackResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "query": {
+        "name": "query",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        },
+        "description": "Text query for lexical and graph recall."
+      },
+      "project": {
+        "name": "project",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        },
+        "description": "Repo or product scope."
+      },
+      "memoryType": {
+        "name": "memoryType",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        },
+        "description": "Memory category filter."
+      },
+      "tag": {
+        "name": "tag",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        },
+        "description": "Tag filter."
+      },
+      "asOf": {
+        "name": "asOf",
+        "in": "query",
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "description": "Temporal filter. Recall endpoints return memories whose validFrom/validTo window includes this timestamp; event endpoints return events at or before this timestamp."
+      },
+      "limit": {
+        "name": "limit",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "description": "Maximum result count."
+      },
+      "memoryUid": {
+        "name": "memoryUid",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "description": "Memory entity UID, such as AgentMemory-1."
+      },
+      "eventUid": {
+        "name": "eventUid",
+        "in": "query",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "description": "Memory event UID, such as MemoryEvent-1."
+      }
+    },
+    "responses": {
+      "Error": {
+        "description": "Structured error response.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "HealthStatus": {
+        "type": "object",
+        "required": [
+          "status",
+          "service"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "UP"
+          },
+          "service": {
+            "type": "string",
+            "example": "mnemic-server"
+          }
+        }
+      },
+      "JsonObject": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "AgentMemoryRequest": {
+        "type": "object",
+        "required": [
+          "title",
+          "content"
+        ],
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "memoryType": {
+            "type": "string"
+          },
+          "project": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "source": {
+            "type": "string"
+          },
+          "sourceKey": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "importance": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "observedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "validTo": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "relatedMemoryUids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/JsonObject"
+          }
+        }
+      },
+      "AgentMemoryRecord": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AgentMemoryRequest"
+          },
+          {
+            "type": "object",
+            "required": [
+              "entityUid",
+              "title",
+              "content",
+              "memoryType",
+              "project",
+              "tags",
+              "source",
+              "sourceKey",
+              "actor",
+              "importance",
+              "confidence",
+              "observedAt",
+              "validFrom",
+              "validTo",
+              "createdAt",
+              "updatedAt",
+              "metadata",
+              "relatedMemoryUids"
+            ],
+            "properties": {
+              "entityUid": {
+                "type": "string"
+              },
+              "memoryType": {
+                "type": "string"
+              },
+              "project": {
+                "type": "string"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "source": {
+                "type": "string"
+              },
+              "sourceKey": {
+                "type": "string"
+              },
+              "actor": {
+                "type": "string"
+              },
+              "importance": {
+                "type": "number"
+              },
+              "confidence": {
+                "type": "number"
+              },
+              "observedAt": {
+                "type": "string"
+              },
+              "validFrom": {
+                "type": "string"
+              },
+              "validTo": {
+                "type": "string"
+              },
+              "createdAt": {
+                "type": "string"
+              },
+              "updatedAt": {
+                "type": "string"
+              },
+              "metadata": {
+                "$ref": "#/components/schemas/JsonObject"
+              },
+              "relatedMemoryUids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "policyFindings": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AgentMemoryPolicyFinding"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "AgentMemoryRelationRequest": {
+        "type": "object",
+        "required": [
+          "targetMemoryUid"
+        ],
+        "properties": {
+          "targetMemoryUid": {
+            "type": "string"
+          },
+          "relationshipType": {
+            "type": "string"
+          },
+          "attributes": {
+            "$ref": "#/components/schemas/JsonObject"
+          }
+        }
+      },
+      "AgentMemoryPolicyFinding": {
+        "type": "object",
+        "required": [
+          "policyId",
+          "severity",
+          "field",
+          "message",
+          "recommendation"
+        ],
+        "properties": {
+          "policyId": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "info",
+              "warning",
+              "block"
+            ]
+          },
+          "field": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "recommendation": {
+            "type": "string"
+          }
+        }
+      },
+      "AgentMemoryPolicyStatus": {
+        "type": "object",
+        "required": [
+          "generatedAt",
+          "source",
+          "config"
+        ],
+        "properties": {
+          "generatedAt": {
+            "type": "string"
+          },
+          "source": {
+            "type": "object",
+            "required": [
+              "kind",
+              "policyFile"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "default",
+                  "file",
+                  "constructor"
+                ]
+              },
+              "policyFile": {
+                "type": "string"
+              }
+            }
+          },
+          "config": {
+            "$ref": "#/components/schemas/JsonObject"
+          }
+        }
+      },
+      "AgentMemoryEventDiff": {
+        "type": "object",
+        "required": [
+          "subject",
+          "before",
+          "after",
+          "changedFields"
+        ],
+        "properties": {
+          "subject": {
+            "type": "string",
+            "enum": [
+              "memory",
+              "relation",
+              "state",
+              "none"
+            ]
+          },
+          "before": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonObject"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "after": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonObject"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "changedFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "AgentMemoryStateSummary": {
+        "type": "object",
+        "required": [
+          "memoryCount",
+          "relationCount",
+          "eventCount",
+          "memories",
+          "relations"
+        ],
+        "properties": {
+          "memoryCount": {
+            "type": "integer"
+          },
+          "relationCount": {
+            "type": "integer"
+          },
+          "eventCount": {
+            "type": "integer"
+          },
+          "memories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentMemoryRecord"
+            }
+          },
+          "relations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentMemoryRelation"
+            }
+          }
+        }
+      },
+      "AgentMemoryRelation": {
+        "type": "object",
+        "required": [
+          "sourceMemoryUid",
+          "targetMemoryUid",
+          "relationshipType",
+          "attributes",
+          "createdAt"
+        ],
+        "properties": {
+          "sourceMemoryUid": {
+            "type": "string"
+          },
+          "targetMemoryUid": {
+            "type": "string"
+          },
+          "relationshipType": {
+            "type": "string"
+          },
+          "attributes": {
+            "$ref": "#/components/schemas/JsonObject"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        }
+      },
+      "AgentMemoryWritePreview": {
+        "type": "object",
+        "required": [
+          "generatedAt",
+          "dryRun",
+          "action",
+          "eventType",
+          "wouldAppendEventUid",
+          "memoryUid",
+          "sourceKeyMatched",
+          "afterMemory",
+          "diff",
+          "relationPreviews",
+          "policyFindings",
+          "warnings",
+          "before",
+          "after"
+        ],
+        "properties": {
+          "generatedAt": {
+            "type": "string"
+          },
+          "dryRun": {
+            "type": "boolean",
+            "const": true
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "create",
+              "update"
+            ]
+          },
+          "eventType": {
+            "type": "string",
+            "enum": [
+              "memory-created",
+              "memory-updated"
+            ]
+          },
+          "wouldAppendEventUid": {
+            "type": "string"
+          },
+          "memoryUid": {
+            "type": "string"
+          },
+          "sourceKeyMatched": {
+            "type": "boolean"
+          },
+          "beforeMemory": {
+            "$ref": "#/components/schemas/AgentMemoryRecord"
+          },
+          "afterMemory": {
+            "$ref": "#/components/schemas/AgentMemoryRecord"
+          },
+          "diff": {
+            "$ref": "#/components/schemas/AgentMemoryEventDiff"
+          },
+          "relationPreviews": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentMemoryRelationPreview"
+            }
+          },
+          "policyFindings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentMemoryPolicyFinding"
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "before": {
+            "$ref": "#/components/schemas/AgentMemoryStateSummary"
+          },
+          "after": {
+            "$ref": "#/components/schemas/AgentMemoryStateSummary"
+          }
+        }
+      },
+      "AgentMemoryRelationPreview": {
+        "type": "object",
+        "required": [
+          "targetMemoryUid",
+          "relationshipType",
+          "alreadyExists",
+          "diff"
+        ],
+        "properties": {
+          "targetMemoryUid": {
+            "type": "string"
+          },
+          "relationshipType": {
+            "type": "string"
+          },
+          "alreadyExists": {
+            "type": "boolean"
+          },
+          "diff": {
+            "$ref": "#/components/schemas/AgentMemoryEventDiff"
+          }
+        }
+      },
+      "AgentMemoryContextPack": {
+        "type": "object",
+        "required": [
+          "query",
+          "project",
+          "asOf",
+          "generatedAt",
+          "memories",
+          "context"
+        ],
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "project": {
+            "type": "string"
+          },
+          "asOf": {
+            "type": "string"
+          },
+          "generatedAt": {
+            "type": "string"
+          },
+          "memories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentMemoryRecord"
+            }
+          },
+          "context": {
+            "type": "string"
+          }
+        }
+      },
+      "AgentMemoryRelationPath": {
+        "type": "object",
+        "required": [
+          "nodeUids",
+          "titles",
+          "relationshipTypes",
+          "score"
+        ],
+        "properties": {
+          "nodeUids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "titles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "relationshipTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "score": {
+            "type": "number"
+          }
+        }
+      },
+      "AgentMemoryRecallExplanation": {
+        "type": "object",
+        "required": [
+          "query",
+          "project",
+          "asOf",
+          "generatedAt",
+          "entries"
+        ],
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "project": {
+            "type": "string"
+          },
+          "asOf": {
+            "type": "string"
+          },
+          "generatedAt": {
+            "type": "string"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "memory",
+                "score",
+                "lexicalScore",
+                "importanceBoost",
+                "relationBoost",
+                "matchedTerms",
+                "matchedFields",
+                "fieldScores",
+                "relationPaths",
+                "stale",
+                "reasons"
+              ],
+              "properties": {
+                "memory": {
+                  "$ref": "#/components/schemas/AgentMemoryRecord"
+                },
+                "score": {
+                  "type": "number"
+                },
+                "lexicalScore": {
+                  "type": "number"
+                },
+                "importanceBoost": {
+                  "type": "number"
+                },
+                "relationBoost": {
+                  "type": "number"
+                },
+                "matchedTerms": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "matchedFields": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "fieldScores": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "number"
+                  }
+                },
+                "relationPaths": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AgentMemoryRelationPath"
+                  }
+                },
+                "stale": {
+                  "type": "boolean"
+                },
+                "reasons": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "AgentMemoryBriefing": {
+        "type": "object",
+        "required": [
+          "project",
+          "generatedAt",
+          "recentMemories",
+          "highImportanceMemories",
+          "openProblemMemories",
+          "briefing"
+        ],
+        "properties": {
+          "project": {
+            "type": "string"
+          },
+          "generatedAt": {
+            "type": "string"
+          },
+          "recentMemories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentMemoryRecord"
+            }
+          },
+          "highImportanceMemories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentMemoryRecord"
+            }
+          },
+          "openProblemMemories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentMemoryRecord"
+            }
+          },
+          "briefing": {
+            "type": "string"
+          }
+        }
+      },
+      "AgentMemoryStats": {
+        "type": "object",
+        "required": [
+          "generatedAt",
+          "totalMemories",
+          "byMemoryType",
+          "byProject",
+          "averageImportance",
+          "averageConfidence",
+          "explicitRelationCount",
+          "eventCount",
+          "latestUpdatedAt",
+          "latestEventAt"
+        ],
+        "properties": {
+          "generatedAt": {
+            "type": "string"
+          },
+          "totalMemories": {
+            "type": "integer"
+          },
+          "byMemoryType": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer"
+            }
+          },
+          "byProject": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer"
+            }
+          },
+          "averageImportance": {
+            "type": "number"
+          },
+          "averageConfidence": {
+            "type": "number"
+          },
+          "explicitRelationCount": {
+            "type": "integer"
+          },
+          "eventCount": {
+            "type": "integer"
+          },
+          "latestUpdatedAt": {
+            "type": "string"
+          },
+          "latestEventAt": {
+            "type": "string"
+          }
+        }
+      },
+      "AgentMemoryAudit": {
+        "type": "object",
+        "required": [
+          "generatedAt",
+          "project",
+          "totalMemories",
+          "healthScore",
+          "summary",
+          "findings"
+        ],
+        "properties": {
+          "generatedAt": {
+            "type": "string"
+          },
+          "project": {
+            "type": "string"
+          },
+          "totalMemories": {
+            "type": "integer"
+          },
+          "healthScore": {
+            "type": "number"
+          },
+          "summary": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer"
+            }
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "findingId",
+                "severity",
+                "memoryUid",
+                "title",
+                "category",
+                "message",
+                "recommendation"
+              ],
+              "properties": {
+                "findingId": {
+                  "type": "string"
+                },
+                "severity": {
+                  "type": "string",
+                  "enum": [
+                    "info",
+                    "warning",
+                    "block"
+                  ]
+                },
+                "memoryUid": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "category": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "recommendation": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "AgentMemoryEvent": {
+        "type": "object",
+        "required": [
+          "eventUid",
+          "eventType",
+          "eventAt",
+          "memoryUid",
+          "targetMemoryUid",
+          "relationshipType",
+          "actor",
+          "source",
+          "sourceKey",
+          "project",
+          "memoryType",
+          "tags",
+          "attributes",
+          "diff",
+          "memorySnapshot"
+        ],
+        "properties": {
+          "eventUid": {
+            "type": "string"
+          },
+          "eventType": {
+            "type": "string",
+            "enum": [
+              "memory-created",
+              "memory-updated",
+              "memory-linked",
+              "memory-rolled-back"
+            ]
+          },
+          "eventAt": {
+            "type": "string"
+          },
+          "memoryUid": {
+            "type": "string"
+          },
+          "targetMemoryUid": {
+            "type": "string"
+          },
+          "relationshipType": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "sourceKey": {
+            "type": "string"
+          },
+          "project": {
+            "type": "string"
+          },
+          "memoryType": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "attributes": {
+            "$ref": "#/components/schemas/JsonObject"
+          },
+          "diff": {
+            "$ref": "#/components/schemas/AgentMemoryEventDiff"
+          },
+          "memorySnapshot": {
+            "$ref": "#/components/schemas/AgentMemoryRecord"
+          }
+        }
+      },
+      "AgentMemoryTimeline": {
+        "type": "object",
+        "required": [
+          "project",
+          "asOf",
+          "generatedAt",
+          "entries"
+        ],
+        "properties": {
+          "project": {
+            "type": "string"
+          },
+          "asOf": {
+            "type": "string"
+          },
+          "generatedAt": {
+            "type": "string"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/AgentMemoryEvent"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "memory": {
+                      "$ref": "#/components/schemas/AgentMemoryRecord"
+                    },
+                    "targetMemory": {
+                      "$ref": "#/components/schemas/AgentMemoryRecord"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "AgentMemoryJsonlExport": {
+        "type": "object",
+        "required": [
+          "format",
+          "generatedAt",
+          "project",
+          "memoryType",
+          "tag",
+          "asOf",
+          "lineCount",
+          "jsonl"
+        ],
+        "properties": {
+          "format": {
+            "type": "string",
+            "const": "jsonl"
+          },
+          "generatedAt": {
+            "type": "string"
+          },
+          "project": {
+            "type": "string"
+          },
+          "memoryType": {
+            "type": "string"
+          },
+          "tag": {
+            "type": "string"
+          },
+          "asOf": {
+            "type": "string"
+          },
+          "lineCount": {
+            "type": "integer"
+          },
+          "jsonl": {
+            "type": "string"
+          }
+        }
+      },
+      "AgentMemorySnapshot": {
+        "type": "object",
+        "required": [
+          "generatedAt",
+          "asOf",
+          "project",
+          "memoryType",
+          "tag",
+          "eventCount",
+          "latestEventAt",
+          "memoryCount",
+          "relationCount",
+          "memories",
+          "relations"
+        ],
+        "properties": {
+          "generatedAt": {
+            "type": "string"
+          },
+          "asOf": {
+            "type": "string"
+          },
+          "project": {
+            "type": "string"
+          },
+          "memoryType": {
+            "type": "string"
+          },
+          "tag": {
+            "type": "string"
+          },
+          "eventCount": {
+            "type": "integer"
+          },
+          "latestEventAt": {
+            "type": "string"
+          },
+          "memoryCount": {
+            "type": "integer"
+          },
+          "relationCount": {
+            "type": "integer"
+          },
+          "memories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentMemoryRecord"
+            }
+          },
+          "relations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentMemoryRelation"
+            }
+          }
+        }
+      },
+      "AgentMemoryJsonlImportRequest": {
+        "type": "object",
+        "required": [
+          "jsonl"
+        ],
+        "properties": {
+          "jsonl": {
+            "type": "string"
+          },
+          "confirm": {
+            "type": "boolean"
+          },
+          "actor": {
+            "type": "string"
+          }
+        }
+      },
+      "AgentMemoryJsonlImportResult": {
+        "type": "object",
+        "required": [
+          "generatedAt",
+          "applied",
+          "dryRun",
+          "parsedEventCount",
+          "importedEventCount",
+          "skippedDuplicateEventCount",
+          "importedEventUids",
+          "skippedDuplicateEventUids",
+          "warning",
+          "before",
+          "after"
+        ],
+        "properties": {
+          "generatedAt": {
+            "type": "string"
+          },
+          "applied": {
+            "type": "boolean"
+          },
+          "dryRun": {
+            "type": "boolean"
+          },
+          "parsedEventCount": {
+            "type": "integer"
+          },
+          "importedEventCount": {
+            "type": "integer"
+          },
+          "skippedDuplicateEventCount": {
+            "type": "integer"
+          },
+          "importedEventUids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "skippedDuplicateEventUids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "warning": {
+            "type": "string"
+          },
+          "before": {
+            "$ref": "#/components/schemas/AgentMemoryStateSummary"
+          },
+          "after": {
+            "$ref": "#/components/schemas/AgentMemoryStateSummary"
+          }
+        }
+      },
+      "AgentMemoryRollbackOperation": {
+        "type": "object",
+        "required": [
+          "action",
+          "memoryUid",
+          "targetMemoryUid",
+          "relationshipType",
+          "description"
+        ],
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "remove-memory",
+              "restore-memory",
+              "remove-relation",
+              "no-op"
+            ]
+          },
+          "memoryUid": {
+            "type": "string"
+          },
+          "targetMemoryUid": {
+            "type": "string"
+          },
+          "relationshipType": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "previousMemory": {
+            "$ref": "#/components/schemas/AgentMemoryRecord"
+          },
+          "currentMemory": {
+            "$ref": "#/components/schemas/AgentMemoryRecord"
+          }
+        }
+      },
+      "AgentMemoryRollbackPreview": {
+        "type": "object",
+        "required": [
+          "generatedAt",
+          "eventUid",
+          "targetEvent",
+          "targetEventIndex",
+          "isLatestEvent",
+          "laterEventCount",
+          "laterEvents",
+          "warning",
+          "operation",
+          "before",
+          "after",
+          "current"
+        ],
+        "properties": {
+          "generatedAt": {
+            "type": "string"
+          },
+          "eventUid": {
+            "type": "string"
+          },
+          "targetEvent": {
+            "$ref": "#/components/schemas/AgentMemoryEvent"
+          },
+          "targetEventIndex": {
+            "type": "integer"
+          },
+          "isLatestEvent": {
+            "type": "boolean"
+          },
+          "laterEventCount": {
+            "type": "integer"
+          },
+          "laterEvents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentMemoryEvent"
+            }
+          },
+          "warning": {
+            "type": "string"
+          },
+          "operation": {
+            "$ref": "#/components/schemas/AgentMemoryRollbackOperation"
+          },
+          "before": {
+            "$ref": "#/components/schemas/AgentMemoryStateSummary"
+          },
+          "after": {
+            "$ref": "#/components/schemas/AgentMemoryStateSummary"
+          },
+          "current": {
+            "$ref": "#/components/schemas/AgentMemoryStateSummary"
+          }
+        }
+      },
+      "AgentMemoryRollbackRequest": {
+        "type": "object",
+        "required": [
+          "eventUid",
+          "confirm"
+        ],
+        "properties": {
+          "eventUid": {
+            "type": "string"
+          },
+          "confirm": {
+            "type": "boolean"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "AgentMemoryRollbackResult": {
+        "type": "object",
+        "required": [
+          "generatedAt",
+          "applied",
+          "rolledBackEventUid",
+          "rollbackEvent",
+          "operation",
+          "before",
+          "after"
+        ],
+        "properties": {
+          "generatedAt": {
+            "type": "string"
+          },
+          "applied": {
+            "type": "boolean",
+            "const": true
+          },
+          "rolledBackEventUid": {
+            "type": "string"
+          },
+          "rollbackEvent": {
+            "$ref": "#/components/schemas/AgentMemoryEvent"
+          },
+          "operation": {
+            "$ref": "#/components/schemas/AgentMemoryRollbackOperation"
+          },
+          "before": {
+            "$ref": "#/components/schemas/AgentMemoryStateSummary"
+          },
+          "after": {
+            "$ref": "#/components/schemas/AgentMemoryStateSummary"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "policyFindings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentMemoryPolicyFinding"
+            }
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  }
+}

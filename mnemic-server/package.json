@@ -1,0 +1,47 @@
+{
+  "name": "@mnemic/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "TypeScript backend for Mnemic long-term LLM and agent memory.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dongtang3/mnemic.git",
+    "directory": "mnemic-server"
+  },
+  "bugs": {
+    "url": "https://github.com/dongtang3/mnemic/issues"
+  },
+  "homepage": "https://github.com/dongtang3/mnemic/tree/main/mnemic-server#readme",
+  "keywords": [
+    "agent-memory",
+    "mnemic",
+    "server",
+    "long-term-memory",
+    "typescript"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "package.json"
+  ],
+  "scripts": {
+    "prebuild": "npm --prefix ../mnemic-sdk run build",
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/server.ts",
+    "start": "node dist/server.js",
+    "test": "npm run build && node --test test/*.mjs"
+  },
+  "dependencies": {
+    "@mnemic/sdk": "file:../mnemic-sdk"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
