@@ -37,7 +37,7 @@
     "test": "npm run build && node --test test/*.mjs"
   },
   "devDependencies": {
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   },
   "engines": {
     "node": ">=20"
