@@ -38,8 +38,8 @@
   },
   "dependencies": {
     "@mnemic/sdk": "file:../mnemic-sdk",
-    "@modelcontextprotocol/sdk": "^1.23.3",
-    "zod": "^3.25.76"
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
