@@ -72,9 +72,9 @@
     "studio"
   ],
   "optionalDependencies": {
-    "@esbuild/linux-arm64": "^0.28.1",
-    "@esbuild/linux-x64": "^0.28.1",
-    "lightningcss-linux-arm64-gnu": "^1.32.0",
-    "lightningcss-linux-x64-gnu": "^1.32.0"
+    "@esbuild/linux-arm64": "^0.28.2",
+    "@esbuild/linux-x64": "^0.28.2",
+    "lightningcss-linux-arm64-gnu": "^1.33.0",
+    "lightningcss-linux-x64-gnu": "^1.33.0"
   }
 }
